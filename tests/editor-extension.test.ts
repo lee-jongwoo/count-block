@@ -35,7 +35,7 @@ describe("count block editor extension", () => {
     expect(parent.querySelector(".count-block-footer")?.textContent).toBe("NEIS bytes: 4");
   });
 
-  it("only adds an editor footer while the block source is being edited", () => {
+  it("keeps the editor footer mounted when the selection leaves the block", () => {
     const parent = document.createElement("div");
     document.body.append(parent);
     const doc = ["before", "````count", "text", "````", "after"].join("\n");
@@ -49,9 +49,12 @@ describe("count block editor extension", () => {
       })
     });
 
-    expect(parent.querySelector(".count-block-footer")).toBeNull();
+    expect(parent.querySelector(".count-block-footer")?.textContent).toBe("NEIS bytes: 4");
 
     view.dispatch({ selection: { anchor: doc.indexOf("text") } });
+    expect(parent.querySelector(".count-block-footer")?.textContent).toBe("NEIS bytes: 4");
+
+    view.dispatch({ selection: { anchor: doc.length } });
     expect(parent.querySelector(".count-block-footer")?.textContent).toBe("NEIS bytes: 4");
   });
 });

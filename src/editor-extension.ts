@@ -59,11 +59,6 @@ function buildDecorations(
   const blocks = findCountBlocks(state.doc.toString(), getDefaults());
 
   for (const block of blocks) {
-    const isBeingEdited = state.selection.ranges.some(
-      ({ from, to }) => to >= block.from && from <= block.to
-    );
-    if (!isBeingEdited) continue;
-
     builder.add(
       block.footerPosition,
       block.footerPosition,
@@ -84,7 +79,7 @@ export function createCountBlockEditorExtension(
   return StateField.define<DecorationSet>({
     create: (state) => buildDecorations(state, getDefaults),
     update: (decorations, transaction) =>
-      transaction.docChanged || transaction.selection !== undefined || transaction.reconfigured
+      transaction.docChanged || transaction.reconfigured
         ? buildDecorations(transaction.state, getDefaults)
         : decorations,
     provide: (field) => EditorView.decorations.from(field)

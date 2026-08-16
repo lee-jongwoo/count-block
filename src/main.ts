@@ -25,7 +25,10 @@ export default class CountBlockPlugin extends Plugin {
 
       el.addClass("count-block");
       el.createEl("pre", { cls: "count-block-content", text: source });
-      const footer = el.createDiv({ cls: "count-block-footer", text: presentation.text });
+      const footer = el.createDiv({
+        cls: "count-block-footer count-block-footer-rendered",
+        text: presentation.text
+      });
       footer.setAttribute("aria-live", "polite");
 
       if (presentation.overLimit) footer.addClass("is-over-limit");

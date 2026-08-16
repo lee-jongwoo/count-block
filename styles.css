@@ -4,7 +4,6 @@
 
 .count-block-content {
   box-sizing: border-box;
-  min-height: 5rem;
   margin: 0;
   padding: var(--size-4-3);
   overflow-wrap: anywhere;
@@ -13,7 +12,10 @@
   background: var(--background-primary-alt);
   border: 1px solid var(--background-modifier-border);
   border-radius: var(--radius-s) var(--radius-s) 0 0;
-  font-family: var(--font-text);
+  font-family: var(--font-monospace);
+  font-size: var(--code-size);
+  line-height: var(--line-height-normal);
+  tab-size: var(--tab-size);
 }
 
 .count-block-footer {
@@ -32,6 +34,36 @@
 .count-block-footer-editor {
   box-sizing: border-box;
   padding-bottom: var(--size-4-3);
+}
+
+/* The state-field footer stays mounted in Live Preview to avoid layout jumps. */
+.markdown-source-view .count-block-footer-rendered {
+  display: none;
+}
+
+.markdown-source-view .count-block {
+  margin-block: 0;
+}
+
+.markdown-source-view .count-block-content {
+  padding-block: 0;
+}
+
+/* Preserve the two fence line boxes when Live Preview hides their text. */
+.markdown-source-view .count-block-content::before,
+.markdown-source-view .count-block-content::after {
+  display: block;
+  opacity: 0;
+  pointer-events: none;
+  user-select: none;
+}
+
+.markdown-source-view .count-block-content::before {
+  content: "```count";
+}
+
+.markdown-source-view .count-block-content::after {
+  content: "```";
 }
 
 .count-block-footer.is-over-limit {
