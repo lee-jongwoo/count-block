@@ -1,11 +1,13 @@
-import { RangeSetBuilder, type Extension } from "@codemirror/state";
+import {
+  RangeSetBuilder,
+  StateField,
+  type EditorState,
+  type Extension
+} from "@codemirror/state";
 import {
   Decoration,
   type DecorationSet,
   EditorView,
-  type PluginValue,
-  ViewPlugin,
-  type ViewUpdate,
   WidgetType
 } from "@codemirror/view";
 import { findCountBlocks, type CountBlockDefaults } from "./parser";
@@ -25,73 +27,66 @@ class CountFooterWidget extends WidgetType {
   }
 
   toDOM(): HTMLElement {
+    const wrapper = document.createElement("div");
+    wrapper.className = "count-block-footer-editor";
+
     const footer = document.createElement("div");
-    footer.className = "count-block-footer count-block-footer-editor";
-    footer.setText(this.presentation.text);
+    footer.className = "count-block-footer";
+    footer.textContent = this.presentation.text;
     footer.setAttribute("aria-live", "polite");
 
-    if (this.presentation.overLimit) footer.addClass("is-over-limit");
+    if (this.presentation.overLimit) footer.classList.add("is-over-limit");
     if (this.presentation.error) {
-      footer.addClass("has-error");
+      footer.classList.add("has-error");
       footer.setAttribute("data-count-block-error", this.presentation.error);
       footer.setAttribute("aria-label", `${this.presentation.text}. ${this.presentation.error}`);
-      footer.createSpan({ cls: "count-block-error", text: ` — ${this.presentation.error}` });
+      const error = document.createElement("span");
+      error.className = "count-block-error";
+      error.textContent = ` — ${this.presentation.error}`;
+      footer.append(error);
     }
 
-    return footer;
+    wrapper.append(footer);
+    return wrapper;
   }
 }
 
-class CountBlockViewPlugin implements PluginValue {
-  decorations: DecorationSet;
+function buildDecorations(
+  state: EditorState,
+  getDefaults: () => CountBlockDefaults
+): DecorationSet {
+  const builder = new RangeSetBuilder<Decoration>();
+  const blocks = findCountBlocks(state.doc.toString(), getDefaults());
 
-  constructor(
-    view: EditorView,
-    private readonly getDefaults: () => CountBlockDefaults
-  ) {
-    this.decorations = this.buildDecorations(view);
+  for (const block of blocks) {
+    const isBeingEdited = state.selection.ranges.some(
+      ({ from, to }) => to >= block.from && from <= block.to
+    );
+    if (!isBeingEdited) continue;
+
+    builder.add(
+      block.footerPosition,
+      block.footerPosition,
+      Decoration.widget({
+        block: true,
+        side: 1,
+        widget: new CountFooterWidget(presentCount(block.source, block.configuration))
+      })
+    );
   }
 
-  update(update: ViewUpdate): void {
-    if (update.docChanged || update.viewportChanged || update.transactions.length > 0) {
-      this.decorations = this.buildDecorations(update.view);
-    }
-  }
-
-  private buildDecorations(view: EditorView): DecorationSet {
-    const builder = new RangeSetBuilder<Decoration>();
-    const blocks = findCountBlocks(view.state.doc.toString(), this.getDefaults());
-
-    for (const block of blocks) {
-      const isNearViewport = view.visibleRanges.some(
-        ({ from, to }) => block.footerPosition >= from - 1000 && block.from <= to + 1000
-      );
-      if (!isNearViewport) continue;
-
-      builder.add(
-        block.footerPosition,
-        block.footerPosition,
-        Decoration.widget({
-          block: true,
-          side: 1,
-          widget: new CountFooterWidget(presentCount(block.source, block.configuration))
-        })
-      );
-    }
-
-    return builder.finish();
-  }
+  return builder.finish();
 }
 
 export function createCountBlockEditorExtension(
   getDefaults: () => CountBlockDefaults
 ): Extension {
-  return ViewPlugin.fromClass(
-    class extends CountBlockViewPlugin {
-      constructor(view: EditorView) {
-        super(view, getDefaults);
-      }
-    },
-    { decorations: (plugin) => plugin.decorations }
-  ).extension;
+  return StateField.define<DecorationSet>({
+    create: (state) => buildDecorations(state, getDefaults),
+    update: (decorations, transaction) =>
+      transaction.docChanged || transaction.selection !== undefined || transaction.reconfigured
+        ? buildDecorations(transaction.state, getDefaults)
+        : decorations,
+    provide: (field) => EditorView.decorations.from(field)
+  });
 }
