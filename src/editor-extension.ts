@@ -13,6 +13,10 @@ import {
 import { findCountBlocks, type CountBlockDefaults } from "./parser";
 import { presentCount, type CountPresentation } from "./presentation";
 
+const countBlockLineDecoration = Decoration.line({
+  attributes: { class: "count-block-editor-line" }
+});
+
 class CountFooterWidget extends WidgetType {
   constructor(private readonly presentation: CountPresentation) {
     super();
@@ -59,6 +63,13 @@ function buildDecorations(
   const blocks = findCountBlocks(state.doc.toString(), getDefaults());
 
   for (const block of blocks) {
+    for (let position = block.from; position <= block.to; ) {
+      const line = state.doc.lineAt(position);
+      builder.add(line.from, line.from, countBlockLineDecoration);
+      if (line.to >= block.to) break;
+      position = line.to + 1;
+    }
+
     builder.add(
       block.footerPosition,
       block.footerPosition,

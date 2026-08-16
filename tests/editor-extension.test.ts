@@ -33,6 +33,7 @@ describe("count block editor extension", () => {
     }).not.toThrow();
 
     expect(parent.querySelector(".count-block-footer")?.textContent).toBe("NEIS bytes: 4");
+    expect(parent.querySelectorAll(".count-block-editor-line")).toHaveLength(3);
   });
 
   it("keeps the editor footer mounted when the selection leaves the block", () => {

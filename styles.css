@@ -36,6 +36,10 @@
   padding-bottom: var(--size-4-3);
 }
 
+.count-block-editor-line {
+  padding-inline-end: var(--size-4-3) !important;
+}
+
 /* The state-field footer stays mounted in Live Preview to avoid layout jumps. */
 .markdown-source-view .count-block-footer-rendered {
   display: none;
