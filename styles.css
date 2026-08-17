@@ -1,4 +1,5 @@
 .count-block {
+  position: relative;
   margin-block: var(--size-4-3);
 }
 
@@ -37,7 +38,26 @@
 }
 
 .count-block-editor-line {
+  box-sizing: border-box;
+  width: calc(100% - var(--size-2-2));
   padding-inline-end: var(--size-4-3) !important;
+}
+
+.count-block-copy-button {
+  position: absolute;
+  z-index: 1;
+  inset-block-start: var(--size-2-2);
+  inset-inline-end: var(--size-2-2);
+  opacity: 0;
+}
+
+.count-block:hover .count-block-copy-button,
+.count-block-copy-button:focus-visible {
+  opacity: 1;
+}
+
+.count-block-host-edit-button {
+  display: none !important;
 }
 
 /* The state-field footer stays mounted in Live Preview to avoid layout jumps. */

@@ -1,4 +1,4 @@
-import { Plugin, type Editor } from "obsidian";
+import { MarkdownView, Notice, Plugin, setIcon, type Editor } from "obsidian";
 import { createCountBlockEditorExtension } from "./editor-extension";
 import { METRICS } from "./metrics";
 import {
@@ -24,7 +24,51 @@ export default class CountBlockPlugin extends Plugin {
       const presentation = presentCount(source, configuration);
 
       el.addClass("count-block");
-      el.createEl("pre", { cls: "count-block-content", text: source });
+      const content = el.createEl("pre", { cls: "count-block-content", text: source });
+      const copyButton = el.createEl("button", {
+        cls: "clickable-icon count-block-copy-button",
+        attr: { type: "button", "aria-label": "Copy count block" }
+      });
+      setIcon(copyButton, "copy");
+
+      copyButton.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        void navigator.clipboard.writeText(source).then(
+          () => new Notice("Count block copied"),
+          () => new Notice("Could not copy count block")
+        );
+      });
+
+      content.addEventListener("pointerdown", (event) => {
+        if (el.closest(".markdown-source-view")) event.stopPropagation();
+      });
+
+      content.addEventListener("click", (event) => {
+        if (!el.closest(".markdown-source-view")) return;
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        const sectionInfo = context.getSectionInfo(el);
+        const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
+        if (sectionInfo && markdownView) {
+          markdownView.editor.setCursor({ line: sectionInfo.lineStart + 1, ch: 0 });
+          markdownView.editor.focus();
+          return;
+        }
+
+        el.parentElement
+          ?.querySelector<HTMLButtonElement>(".edit-block-button")
+          ?.click();
+      });
+
+      window.requestAnimationFrame(() => {
+        el.parentElement
+          ?.querySelector<HTMLElement>(".edit-block-button")
+          ?.classList.add("count-block-host-edit-button");
+      });
+
       const footer = el.createDiv({
         cls: "count-block-footer count-block-footer-rendered",
         text: presentation.text
