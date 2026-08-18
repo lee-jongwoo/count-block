@@ -32,7 +32,10 @@ describe("count block editor extension", () => {
       });
     }).not.toThrow();
 
-    expect(parent.querySelector(".count-block-footer")?.textContent).toBe("NEIS bytes: 4");
+    expect(
+      parent.querySelector<HTMLSelectElement>(".count-block-metric-select")?.value
+    ).toBe("neis-bytes");
+    expect(parent.querySelector(".count-block-value")?.textContent).toBe("4");
     expect(parent.querySelectorAll(".count-block-editor-line")).toHaveLength(3);
   });
 
@@ -46,17 +49,45 @@ describe("count block editor extension", () => {
       state: EditorState.create({
         doc,
         selection: { anchor: 0 },
-      extensions: [createCountBlockEditorExtension(() => defaults)]
+        extensions: [createCountBlockEditorExtension(() => defaults)]
       })
     });
 
-    expect(parent.querySelector(".count-block-footer")?.textContent).toBe("NEIS bytes: 4");
+    expect(parent.querySelector(".count-block-value")?.textContent).toBe("4");
 
     view.dispatch({ selection: { anchor: doc.indexOf("text") } });
-    expect(parent.querySelector(".count-block-footer")?.textContent).toBe("NEIS bytes: 4");
+    expect(parent.querySelector(".count-block-value")?.textContent).toBe("4");
 
     view.dispatch({ selection: { anchor: doc.length } });
-    expect(parent.querySelector(".count-block-footer")?.textContent).toBe("NEIS bytes: 4");
+    expect(parent.querySelector(".count-block-value")?.textContent).toBe("4");
+  });
+
+  it("updates the authored metric through its owning editor", () => {
+    const parent = document.createElement("div");
+    document.body.append(parent);
+    const doc = ["```count limit=10", "one two", "```"].join("\n");
+
+    view = new EditorView({
+      parent,
+      state: EditorState.create({
+        doc,
+        extensions: [createCountBlockEditorExtension(() => defaults)]
+      })
+    });
+
+    const select = parent.querySelector<HTMLSelectElement>(".count-block-metric-select");
+    expect(select).not.toBeNull();
+    select!.value = "words";
+    select!.dispatchEvent(new Event("change"));
+
+    expect(view.state.doc.toString()).toBe(
+      ["```count metric=words limit=10", "one two", "```"].join("\n")
+    );
+    expect(
+      parent.querySelector<HTMLSelectElement>(".count-block-metric-select")?.value
+    ).toBe("words");
+    expect(parent.querySelector(".count-block-value")?.textContent).toBe("2");
+    expect(parent.querySelector(".count-block-limit")?.textContent).toBe(" / 10");
   });
 
   it("does not decorate count-looking text inside another code fence", () => {

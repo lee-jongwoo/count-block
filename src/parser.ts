@@ -8,18 +8,24 @@ export interface CountBlockDefaults {
 export interface CountBlockConfiguration {
   metric: MetricId;
   limit: number | null;
-  label: string | null;
   errors: string[];
 }
 
 export interface CountBlockRange {
   from: number;
   to: number;
+  openingTo: number;
   bodyFrom: number;
   bodyTo: number;
   footerPosition: number;
   source: string;
   configuration: CountBlockConfiguration;
+}
+
+export interface CountBlockTextChange {
+  from: number;
+  to: number;
+  insert: string;
 }
 
 interface FenceOpening {
@@ -100,7 +106,6 @@ export function parseCountBlockConfiguration(
   const { values, errors } = parseOptions(info);
   let metric = defaults.metric;
   let limit = defaults.limit;
-  const label = values.get("label")?.trim() || null;
 
   const metricValue = values.get("metric");
   if (metricValue) {
@@ -116,12 +121,12 @@ export function parseCountBlockConfiguration(
   }
 
   for (const key of values.keys()) {
-    if (key !== "metric" && key !== "limit" && key !== "label") {
+    if (key !== "metric" && key !== "limit") {
       errors.push(`Unknown option: ${key}`);
     }
   }
 
-  return { metric, limit, label, errors };
+  return { metric, limit, errors };
 }
 
 function lineStarts(lines: string[]): number[] {
@@ -161,6 +166,7 @@ export function findCountBlocks(
       blocks.push({
         from: starts[index],
         to: closingEnd,
+        openingTo: starts[index] + lines[index].length,
         bodyFrom,
         bodyTo: Math.max(bodyFrom, bodyTo),
         footerPosition: closingEnd,
@@ -175,6 +181,34 @@ export function findCountBlocks(
   }
 
   return blocks;
+}
+
+export function createMetricOptionChange(
+  documentText: string,
+  block: CountBlockRange,
+  metric: MetricId
+): CountBlockTextChange {
+  const openingLine = documentText.slice(block.from, block.openingTo);
+  const metricOptions = Array.from(
+    openingLine.matchAll(
+      /(^|\s)metric=(?:"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|[^\s]+)/gu
+    )
+  );
+  const metricOption = metricOptions.at(-1);
+
+  if (metricOption) {
+    const leadingWhitespace = metricOption[1].length;
+    const relativeFrom = (metricOption.index ?? 0) + leadingWhitespace;
+    return {
+      from: block.from + relativeFrom,
+      to: block.from + (metricOption.index ?? 0) + metricOption[0].length,
+      insert: `metric=${metric}`
+    };
+  }
+
+  const countMarker = openingLine.match(/^\s{0,3}(?:`{3,}|~{3,})count/u);
+  const insertAt = block.from + (countMarker?.[0].length ?? openingLine.length);
+  return { from: insertAt, to: insertAt, insert: ` metric=${metric}` };
 }
 
 export function parseCountBlockSection(

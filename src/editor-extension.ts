@@ -11,7 +11,13 @@ import {
   WidgetType
 } from "@codemirror/view";
 import { appendCountFooter } from "./footer";
-import { findCountBlocks, type CountBlockDefaults } from "./parser";
+import { isMetricId, METRICS, METRIC_IDS } from "./metrics";
+import {
+  createMetricOptionChange,
+  findCountBlocks,
+  type CountBlockDefaults,
+  type CountBlockRange
+} from "./parser";
 import { presentCount, type CountPresentation } from "./presentation";
 
 const lineDecorations = {
@@ -29,7 +35,10 @@ const lineDecorations = {
 };
 
 class CountFooterWidget extends WidgetType {
-  constructor(private readonly presentation: CountPresentation) {
+  constructor(
+    private readonly block: CountBlockRange,
+    private readonly presentation: CountPresentation
+  ) {
     super();
   }
 
@@ -37,14 +46,30 @@ class CountFooterWidget extends WidgetType {
     return (
       this.presentation.text === other.presentation.text &&
       this.presentation.error === other.presentation.error &&
-      this.presentation.overLimit === other.presentation.overLimit
+      this.presentation.overLimit === other.presentation.overLimit &&
+      this.block.from === other.block.from &&
+      this.block.openingTo === other.block.openingTo
     );
   }
 
   toDOM(view: EditorView): HTMLElement {
     const wrapper = view.dom.ownerDocument.createElement("div");
     wrapper.className = "count-block-footer-editor";
-    appendCountFooter(wrapper, this.presentation);
+    appendCountFooter(wrapper, this.presentation, {
+      metricSelector: {
+        value: this.block.configuration.metric,
+        options: METRIC_IDS.map((value) => ({ value, label: METRICS[value].label })),
+        onChange: (value) => {
+          if (!isMetricId(value) || value === this.block.configuration.metric) return;
+          const change = createMetricOptionChange(
+            view.state.doc.toString(),
+            this.block,
+            value
+          );
+          view.dispatch({ changes: change });
+        }
+      }
+    });
     return wrapper;
   }
 }
@@ -84,7 +109,10 @@ function buildDecorations(
       Decoration.widget({
         block: true,
         side: 1,
-        widget: new CountFooterWidget(presentCount(block.source, block.configuration))
+        widget: new CountFooterWidget(
+          block,
+          presentCount(block.source, block.configuration)
+        )
       })
     );
   }

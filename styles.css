@@ -28,6 +28,10 @@
 }
 
 .count-block-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: flex-end;
   box-sizing: border-box;
   padding: var(--size-2-2) var(--size-4-3);
   color: var(--text-muted);
@@ -38,6 +42,108 @@
   font-size: var(--font-ui-smaller);
   font-variant-numeric: tabular-nums;
   text-align: end;
+}
+
+.count-block-footer .count-block-metric-control {
+  display: inline-flex;
+  align-items: baseline;
+  min-width: 0;
+  color: inherit;
+  border-radius: var(--radius-s);
+}
+
+.count-block-footer .count-block-metric-control:hover,
+.count-block-footer .count-block-metric-control:focus-within {
+  color: var(--text-accent);
+}
+
+.count-block-footer .count-block-metric-control:focus-within {
+  outline: 2px solid var(--background-modifier-border-focus);
+  outline-offset: 2px;
+}
+
+.count-block-footer select.count-block-metric-select {
+  width: auto;
+  max-width: min(18rem, 45vw);
+  min-width: 0;
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  appearance: none;
+  color: inherit;
+  background: transparent none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  font: inherit;
+  line-height: inherit;
+  text-align: end;
+  text-align-last: end;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  vertical-align: baseline;
+}
+
+.count-block-footer .count-block-metric-control select.count-block-metric-select:hover,
+.count-block-footer .count-block-metric-control select.count-block-metric-select:focus,
+.count-block-footer .count-block-metric-control select.count-block-metric-select:focus-visible,
+.count-block-footer .count-block-metric-control select.count-block-metric-select:active {
+  background-color: transparent;
+  background-image: none;
+  border: 0;
+  box-shadow: none;
+}
+
+.count-block-footer .count-block-metric-control select.count-block-metric-select:focus,
+.count-block-footer .count-block-metric-control select.count-block-metric-select:focus-visible {
+  outline: none;
+}
+
+.count-block-separator {
+  margin-inline-end: 0.25em;
+}
+
+.count-block-limit {
+  margin-inline-start: 0.25em;
+}
+
+.count-block-footer button.count-block-value {
+  display: inline;
+  width: auto;
+  min-width: 0;
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  appearance: none;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-s);
+  box-shadow: none;
+  font: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  cursor: pointer;
+}
+
+.count-block-footer button.count-block-value:hover,
+.count-block-footer button.count-block-value:focus-visible {
+  color: var(--text-accent);
+}
+
+.count-block-footer button.count-block-value:focus-visible {
+  outline: 2px solid var(--background-modifier-border-focus);
+  outline-offset: 2px;
+}
+
+.count-block-value[data-copy-state="copied"] {
+  color: var(--text-success);
+}
+
+.count-block-value[data-copy-state="error"] {
+  color: var(--text-error);
 }
 
 .count-block-editor-line {

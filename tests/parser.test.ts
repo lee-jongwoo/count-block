@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  createMetricOptionChange,
   findCountBlocks,
   parseCountBlockConfiguration,
   parseCountBlockSection,
@@ -9,16 +10,12 @@ import {
 const defaults = { metric: "neis-bytes" as const, limit: null };
 
 describe("count block configuration", () => {
-  it("parses block options, including quoted labels", () => {
+  it("parses block options", () => {
     expect(
-      parseCountBlockConfiguration(
-        'metric=characters-no-spaces limit=1500 label="Career notes"',
-        defaults
-      )
+      parseCountBlockConfiguration("metric=characters-no-spaces limit=1500", defaults)
     ).toEqual({
       metric: "characters-no-spaces",
       limit: 1500,
-      label: "Career notes",
       errors: []
     });
   });
@@ -82,12 +79,41 @@ describe("fenced count blocks", () => {
 
   it("parses an exact rendered section through the shared block model", () => {
     const section = parseCountBlockSection(
-      ["```count metric=words label='Notes'", "one two", "```"].join("\n"),
+      ["```count metric=words", "one two", "```"].join("\n"),
       defaults
     );
 
     expect(section?.source).toBe("one two");
     expect(section?.configuration.metric).toBe("words");
-    expect(section?.configuration.label).toBe("Notes");
+  });
+
+  it("creates a focused metric edit without rewriting other options", () => {
+    const document = ["before", "```count limit=10 metric=words", "one two", "```"].join("\n");
+    const block = findCountBlocks(document, defaults)[0];
+    const change = createMetricOptionChange(document, block, "characters");
+
+    expect(document.slice(0, change.from) + change.insert + document.slice(change.to)).toBe(
+      ["before", "```count limit=10 metric=characters", "one two", "```"].join("\n")
+    );
+  });
+
+  it("inserts a metric option when the opening fence relies on defaults", () => {
+    const document = ["```count limit=10", "text", "```"].join("\n");
+    const block = findCountBlocks(document, defaults)[0];
+    const change = createMetricOptionChange(document, block, "words");
+
+    expect(document.slice(0, change.from) + change.insert + document.slice(change.to)).toBe(
+      ["```count metric=words limit=10", "text", "```"].join("\n")
+    );
+  });
+
+  it("edits the effective option when duplicate metrics are authored", () => {
+    const document = ["```count metric=words metric=characters", "text", "```"].join("\n");
+    const block = findCountBlocks(document, defaults)[0];
+    const change = createMetricOptionChange(document, block, "utf8-bytes");
+
+    expect(document.slice(0, change.from) + change.insert + document.slice(change.to)).toBe(
+      ["```count metric=words metric=utf8-bytes", "text", "```"].join("\n")
+    );
   });
 });

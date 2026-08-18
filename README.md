@@ -5,7 +5,7 @@ Count Block is an Obsidian plugin for editable plain-text blocks with a live cou
 The block remains normal Markdown. In Live Preview and Source mode, the editable code block is enhanced with a count footer; Reading mode enhances Obsidian's native rendered code block with the same footer. No content is stored outside the note.
 
 ````markdown
-```count metric=neis-bytes limit=1500 label="Career activity"
+```count metric=neis-bytes limit=1500
 Write plain text here.
 ```
 ````
@@ -22,9 +22,10 @@ Block options belong on the opening fence and are not included in the count:
 
 - `metric=<metric-id>`
 - `limit=<positive-integer>`
-- `label="Custom label"`
 
 Use the **Count Block: Insert count block** command to create a block or wrap selected text.
+
+In Live Preview and Source mode, choose a metric from the footer to update the block's `metric=` option. Click the numeric count to copy its unformatted value. Reading mode keeps the metric name static but also supports click-to-copy.
 
 Invalid metrics, limits, or option names are shown in the footer. Top-level fenced blocks are supported in the initial release; nesting a count block inside a list or blockquote is not yet supported by the live editor footer.
 
