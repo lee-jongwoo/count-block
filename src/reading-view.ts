@@ -32,8 +32,9 @@ export function enhanceCountBlocksInReadingView(
     const configuration =
       parsed?.configuration ?? parseCountBlockConfiguration("", defaults);
 
-    const wrapper = pre.ownerDocument.createElement("div");
-    wrapper.className = "count-block count-block-reading";
+    const wrapper = pre.parentElement.createDiv({
+      cls: "count-block count-block-reading"
+    });
     pre.before(wrapper);
     wrapper.append(pre);
 

@@ -7,6 +7,9 @@ on:
 
 permissions:
   contents: write
+  id-token: write
+  attestations: write
+  artifact-metadata: write
 
 jobs:
   release:
@@ -60,6 +63,14 @@ jobs:
             );
           }
           EOF
+
+      - name: Attest release assets
+        uses: actions/attest@v4
+        with:
+          subject-path: |
+            main.js
+            manifest.json
+            styles.css
 
       - name: Create draft release
         env:

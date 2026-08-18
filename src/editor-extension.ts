@@ -53,8 +53,7 @@ class CountFooterWidget extends WidgetType {
   }
 
   toDOM(view: EditorView): HTMLElement {
-    const wrapper = view.dom.ownerDocument.createElement("div");
-    wrapper.className = "count-block-footer-editor";
+    const wrapper = view.dom.createDiv({ cls: "count-block-footer-editor" });
     appendCountFooter(wrapper, this.presentation, {
       metricSelector: {
         value: this.block.configuration.metric,

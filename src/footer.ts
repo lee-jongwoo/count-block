@@ -22,36 +22,31 @@ function appendMetricControl(
   selector: CountFooterMetricSelector | undefined
 ): void {
   if (!selector) {
-    const label = footer.ownerDocument.createElement("span");
-    label.className = "count-block-metric-label";
-    label.textContent = presentation.metricLabel;
-    footer.append(label);
+    footer.createSpan({
+      cls: "count-block-metric-label",
+      text: presentation.metricLabel
+    });
     return;
   }
 
-  const control = footer.ownerDocument.createElement("span");
-  control.className = "count-block-metric-control";
+  const control = footer.createSpan({ cls: "count-block-metric-control" });
 
-  const select = footer.ownerDocument.createElement("select");
-  select.className = "count-block-metric-select";
-  select.setAttribute("aria-label", "Count metric");
+  const select = control.createEl("select", {
+    cls: "count-block-metric-select",
+    attr: { "aria-label": "Count metric" }
+  });
   for (const metric of selector.options) {
-    const option = footer.ownerDocument.createElement("option");
-    option.value = metric.value;
-    option.textContent = metric.label;
-    select.append(option);
+    select.createEl("option", { value: metric.value, text: metric.label });
   }
   select.value = selector.value;
   select.addEventListener("change", () => selector.onChange(select.value));
-  control.append(select);
-  footer.append(control);
 }
 
 function appendCountValue(footer: HTMLElement, presentation: CountPresentation): void {
-  const value = footer.ownerDocument.createElement("span");
-  value.className = "count-block-value";
-  value.textContent = presentation.formattedValue;
-  footer.append(value);
+  footer.createSpan({
+    cls: "count-block-value",
+    text: presentation.formattedValue
+  });
 }
 
 export function appendCountFooter(
@@ -59,24 +54,22 @@ export function appendCountFooter(
   presentation: CountPresentation,
   options: CountFooterOptions = {}
 ): HTMLDivElement {
-  const footer = parent.ownerDocument.createElement("div");
-  footer.className = ["count-block-footer", options.className].filter(Boolean).join(" ");
-  footer.setAttribute("aria-live", "polite");
+  const footer = parent.createDiv({
+    cls: ["count-block-footer", options.className].filter(Boolean).join(" "),
+    attr: { "aria-live": "polite" }
+  });
 
   appendMetricControl(footer, presentation, options.metricSelector);
 
-  const separator = parent.ownerDocument.createElement("span");
-  separator.className = "count-block-separator";
-  separator.textContent = ": ";
-  footer.append(separator);
+  footer.createSpan({ cls: "count-block-separator", text: ": " });
 
   appendCountValue(footer, presentation);
 
   if (presentation.formattedLimit !== null) {
-    const limit = parent.ownerDocument.createElement("span");
-    limit.className = "count-block-limit";
-    limit.textContent = ` / ${presentation.formattedLimit}`;
-    footer.append(limit);
+    footer.createSpan({
+      cls: "count-block-limit",
+      text: ` / ${presentation.formattedLimit}`
+    });
   }
 
   if (presentation.overLimit) footer.classList.add("is-over-limit");
@@ -85,12 +78,11 @@ export function appendCountFooter(
     footer.dataset.countBlockError = presentation.error;
     footer.setAttribute("aria-label", `${presentation.text}. ${presentation.error}`);
 
-    const error = parent.ownerDocument.createElement("span");
-    error.className = "count-block-error";
-    error.textContent = ` — ${presentation.error}`;
-    footer.append(error);
+    footer.createSpan({
+      cls: "count-block-error",
+      text: ` — ${presentation.error}`
+    });
   }
 
-  parent.append(footer);
   return footer;
 }

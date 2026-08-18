@@ -22,8 +22,8 @@ export default class CountBlockPlugin extends Plugin {
     this.registerEditorExtension(createCountBlockEditorExtension(() => this.getDefaults()));
 
     this.addCommand({
-      id: "insert-count-block",
-      name: "Insert count block",
+      id: "insert",
+      name: "Insert",
       editorCallback: (editor) => this.insertCountBlock(editor)
     });
 
