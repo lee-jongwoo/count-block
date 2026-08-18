@@ -30,15 +30,28 @@ interface FenceOpening {
 
 const OPTION_PATTERN = /([\w-]+)=(?:"((?:[^"\\]|\\.)*)"|'((?:[^'\\]|\\.)*)'|([^\s]+))/gy;
 
-export function parseFenceOpening(line: string): FenceOpening | null {
-  const match = line.match(/^\s{0,3}(`{3,}|~{3,})count(?:\s+(.*?))?\s*$/u);
+function parseAnyFenceOpening(line: string): FenceOpening | null {
+  const match = line.match(/^\s{0,3}(`{3,}|~{3,})(.*)$/u);
   if (!match) return null;
 
-  return {
-    marker: match[1][0] as "`" | "~",
-    length: match[1].length,
-    info: match[2] ?? ""
-  };
+  const marker = match[1][0] as "`" | "~";
+  const info = match[2].trim();
+  if (marker === "`" && info.includes("`")) return null;
+
+  return { marker, length: match[1].length, info };
+}
+
+export function parseFenceOpening(line: string): FenceOpening | null {
+  const opening = parseAnyFenceOpening(line);
+  if (!opening) return null;
+
+  const match = opening.info.match(/^count(?:\s+(.*?))?\s*$/u);
+  if (!match) return null;
+  return { ...opening, info: match[1] ?? "" };
+}
+
+function closingFencePattern(opening: FenceOpening): RegExp {
+  return new RegExp(`^\\s{0,3}${opening.marker}{${opening.length},}\\s*$`, "u");
 }
 
 function unescapeQuoted(value: string): string {
@@ -74,6 +87,12 @@ function parseOptions(info: string): { values: Map<string, string>; errors: stri
   return { values, errors };
 }
 
+export function parsePositiveSafeInteger(value: string): number | null {
+  if (!/^\d+$/u.test(value)) return null;
+  const parsed = Number(value);
+  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : null;
+}
+
 export function parseCountBlockConfiguration(
   info: string,
   defaults: CountBlockDefaults
@@ -91,11 +110,9 @@ export function parseCountBlockConfiguration(
 
   const limitValue = values.get("limit");
   if (limitValue !== undefined) {
-    if (!/^\d+$/u.test(limitValue) || Number(limitValue) <= 0) {
-      errors.push("Limit must be a positive integer");
-    } else {
-      limit = Number(limitValue);
-    }
+    const parsedLimit = parsePositiveSafeInteger(limitValue);
+    if (parsedLimit === null) errors.push("Limit must be a positive integer");
+    else limit = parsedLimit;
   }
 
   for (const key of values.keys()) {
@@ -107,57 +124,63 @@ export function parseCountBlockConfiguration(
   return { metric, limit, label, errors };
 }
 
-export function findCountBlocks(
-  documentText: string,
-  defaults: CountBlockDefaults
-): CountBlockRange[] {
-  const lines = documentText.split("\n");
+function lineStarts(lines: string[]): number[] {
   const starts: number[] = [];
   let position = 0;
   for (const line of lines) {
     starts.push(position);
     position += line.length + 1;
   }
+  return starts;
+}
 
+export function findCountBlocks(
+  documentText: string,
+  defaults: CountBlockDefaults
+): CountBlockRange[] {
+  const lines = documentText.split("\n");
+  const starts = lineStarts(lines);
   const blocks: CountBlockRange[] = [];
-  for (let index = 0; index < lines.length; index += 1) {
-    const opening = parseFenceOpening(lines[index]);
-    if (!opening) continue;
 
-    const closingPattern = new RegExp(
-      `^\\s{0,3}${opening.marker}{${opening.length},}\\s*$`,
-      "u"
-    );
+  for (let index = 0; index < lines.length; index += 1) {
+    const anyOpening = parseAnyFenceOpening(lines[index]);
+    if (!anyOpening) continue;
+
+    const closingPattern = closingFencePattern(anyOpening);
     let closingIndex = index + 1;
     while (closingIndex < lines.length && !closingPattern.test(lines[closingIndex])) {
       closingIndex += 1;
     }
-    if (closingIndex >= lines.length) continue;
+    if (closingIndex >= lines.length) break;
 
-    const bodyLines = lines.slice(index + 1, closingIndex);
-    const bodyFrom = starts[index] + lines[index].length + 1;
-    const bodyTo = starts[closingIndex] - 1;
-    const closingEnd = starts[closingIndex] + lines[closingIndex].length;
-    blocks.push({
-      from: starts[index],
-      to: closingEnd,
-      bodyFrom,
-      bodyTo: Math.max(bodyFrom, bodyTo),
-      footerPosition: closingEnd,
-      source: bodyLines.join("\n"),
-      configuration: parseCountBlockConfiguration(opening.info, defaults)
-    });
+    const countOpening = parseFenceOpening(lines[index]);
+    if (countOpening) {
+      const bodyFrom = starts[index] + lines[index].length + 1;
+      const bodyTo = starts[closingIndex] - 1;
+      const closingEnd = starts[closingIndex] + lines[closingIndex].length;
+      blocks.push({
+        from: starts[index],
+        to: closingEnd,
+        bodyFrom,
+        bodyTo: Math.max(bodyFrom, bodyTo),
+        footerPosition: closingEnd,
+        source: lines.slice(index + 1, closingIndex).join("\n"),
+        configuration: parseCountBlockConfiguration(countOpening.info, defaults)
+      });
+    }
 
+    // Skipping every fenced block prevents count-looking content inside another
+    // code fence from being interpreted as Markdown structure.
     index = closingIndex;
   }
 
   return blocks;
 }
 
-export function parseConfigurationFromSection(
+export function parseCountBlockSection(
   sectionText: string | undefined,
   defaults: CountBlockDefaults
-): CountBlockConfiguration {
-  const opening = sectionText ? parseFenceOpening(sectionText.split("\n", 1)[0]) : null;
-  return parseCountBlockConfiguration(opening?.info ?? "", defaults);
+): CountBlockRange | null {
+  if (sectionText === undefined) return null;
+  return findCountBlocks(sectionText, defaults).find((block) => block.from === 0) ?? null;
 }

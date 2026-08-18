@@ -2,7 +2,7 @@
 
 Count Block is an Obsidian plugin for editable plain-text blocks with a live count beneath them.
 
-The block remains normal Markdown: edit its body in Live Preview or Source mode, and view the styled block in Reading mode. No content is stored outside the note.
+The block remains normal Markdown. In Live Preview and Source mode, the editable code block is enhanced with a count footer; Reading mode enhances Obsidian's native rendered code block with the same footer. No content is stored outside the note.
 
 ````markdown
 ```count metric=neis-bytes limit=1500 label="Career activity"

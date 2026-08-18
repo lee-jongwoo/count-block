@@ -10,12 +10,23 @@ import {
   EditorView,
   WidgetType
 } from "@codemirror/view";
+import { appendCountFooter } from "./footer";
 import { findCountBlocks, type CountBlockDefaults } from "./parser";
 import { presentCount, type CountPresentation } from "./presentation";
 
-const countBlockLineDecoration = Decoration.line({
-  attributes: { class: "count-block-editor-line" }
-});
+const lineDecorations = {
+  middle: Decoration.line({ class: "count-block-editor-line" }),
+  first: Decoration.line({
+    class: "count-block-editor-line count-block-editor-line-first"
+  }),
+  last: Decoration.line({
+    class: "count-block-editor-line count-block-editor-line-last"
+  }),
+  only: Decoration.line({
+    class:
+      "count-block-editor-line count-block-editor-line-first count-block-editor-line-last"
+  })
+};
 
 class CountFooterWidget extends WidgetType {
   constructor(private readonly presentation: CountPresentation) {
@@ -30,42 +41,39 @@ class CountFooterWidget extends WidgetType {
     );
   }
 
-  toDOM(): HTMLElement {
-    const wrapper = document.createElement("div");
+  toDOM(view: EditorView): HTMLElement {
+    const wrapper = view.dom.ownerDocument.createElement("div");
     wrapper.className = "count-block-footer-editor";
-
-    const footer = document.createElement("div");
-    footer.className = "count-block-footer";
-    footer.textContent = this.presentation.text;
-    footer.setAttribute("aria-live", "polite");
-
-    if (this.presentation.overLimit) footer.classList.add("is-over-limit");
-    if (this.presentation.error) {
-      footer.classList.add("has-error");
-      footer.setAttribute("data-count-block-error", this.presentation.error);
-      footer.setAttribute("aria-label", `${this.presentation.text}. ${this.presentation.error}`);
-      const error = document.createElement("span");
-      error.className = "count-block-error";
-      error.textContent = ` — ${this.presentation.error}`;
-      footer.append(error);
-    }
-
-    wrapper.append(footer);
+    appendCountFooter(wrapper, this.presentation);
     return wrapper;
   }
 }
 
+function decorationForLine(first: boolean, last: boolean): Decoration {
+  if (first && last) return lineDecorations.only;
+  if (first) return lineDecorations.first;
+  if (last) return lineDecorations.last;
+  return lineDecorations.middle;
+}
+
 function buildDecorations(
   state: EditorState,
-  getDefaults: () => CountBlockDefaults
+  getDefaults: () => CountBlockDefaults,
+  isEnabled: (state: EditorState) => boolean
 ): DecorationSet {
+  if (!isEnabled(state)) return Decoration.none;
+
   const builder = new RangeSetBuilder<Decoration>();
   const blocks = findCountBlocks(state.doc.toString(), getDefaults());
 
   for (const block of blocks) {
     for (let position = block.from; position <= block.to; ) {
       const line = state.doc.lineAt(position);
-      builder.add(line.from, line.from, countBlockLineDecoration);
+      builder.add(
+        line.from,
+        line.from,
+        decorationForLine(line.from === block.from, line.to >= block.to)
+      );
       if (line.to >= block.to) break;
       position = line.to + 1;
     }
@@ -84,14 +92,21 @@ function buildDecorations(
   return builder.finish();
 }
 
+export interface CountBlockEditorExtensionOptions {
+  isEnabled?: (state: EditorState) => boolean;
+}
+
 export function createCountBlockEditorExtension(
-  getDefaults: () => CountBlockDefaults
+  getDefaults: () => CountBlockDefaults,
+  options: CountBlockEditorExtensionOptions = {}
 ): Extension {
+  const isEnabled = options.isEnabled ?? (() => true);
+
   return StateField.define<DecorationSet>({
-    create: (state) => buildDecorations(state, getDefaults),
+    create: (state) => buildDecorations(state, getDefaults, isEnabled),
     update: (decorations, transaction) =>
-      transaction.docChanged || transaction.reconfigured
-        ? buildDecorations(transaction.state, getDefaults)
+      transaction.docChanged || transaction.reconfigured || transaction.effects.length > 0
+        ? buildDecorations(transaction.state, getDefaults, isEnabled)
         : decorations,
     provide: (field) => EditorView.decorations.from(field)
   });

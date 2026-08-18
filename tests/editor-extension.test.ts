@@ -46,7 +46,7 @@ describe("count block editor extension", () => {
       state: EditorState.create({
         doc,
         selection: { anchor: 0 },
-        extensions: [createCountBlockEditorExtension(() => defaults)]
+      extensions: [createCountBlockEditorExtension(() => defaults)]
       })
     });
 
@@ -57,5 +57,40 @@ describe("count block editor extension", () => {
 
     view.dispatch({ selection: { anchor: doc.length } });
     expect(parent.querySelector(".count-block-footer")?.textContent).toBe("NEIS bytes: 4");
+  });
+
+  it("does not decorate count-looking text inside another code fence", () => {
+    const parent = document.createElement("div");
+    document.body.append(parent);
+    const doc = ["````markdown", "```count", "not a block", "```", "````"].join("\n");
+
+    view = new EditorView({
+      parent,
+      state: EditorState.create({
+        doc,
+        extensions: [createCountBlockEditorExtension(() => defaults)]
+      })
+    });
+
+    expect(parent.querySelector(".count-block-footer")).toBeNull();
+  });
+
+  it("can be disabled without changing the document", () => {
+    const parent = document.createElement("div");
+    document.body.append(parent);
+    const doc = ["```count", "text", "```"].join("\n");
+
+    view = new EditorView({
+      parent,
+      state: EditorState.create({
+        doc,
+        extensions: [
+          createCountBlockEditorExtension(() => defaults, { isEnabled: () => false })
+        ]
+      })
+    });
+
+    expect(view.state.doc.toString()).toBe(doc);
+    expect(parent.querySelector(".count-block-footer")).toBeNull();
   });
 });

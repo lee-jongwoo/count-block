@@ -1,11 +1,8 @@
-import { MarkdownView, Notice, Plugin, setIcon, type Editor } from "obsidian";
+import { Plugin, type Editor } from "obsidian";
 import { createCountBlockEditorExtension } from "./editor-extension";
-import { METRICS } from "./metrics";
-import {
-  parseConfigurationFromSection,
-  type CountBlockDefaults
-} from "./parser";
-import { presentCount } from "./presentation";
+import { isMetricId } from "./metrics";
+import type { CountBlockDefaults } from "./parser";
+import { enhanceCountBlocksInReadingView } from "./reading-view";
 import {
   CountBlockSettingTab,
   DEFAULT_SETTINGS,
@@ -18,68 +15,8 @@ export default class CountBlockPlugin extends Plugin {
   async onload(): Promise<void> {
     await this.loadSettings();
 
-    this.registerMarkdownCodeBlockProcessor("count", (source, el, context) => {
-      const section = context.getSectionInfo(el);
-      const configuration = parseConfigurationFromSection(section?.text, this.getDefaults());
-      const presentation = presentCount(source, configuration);
-
-      el.addClass("count-block");
-      const content = el.createEl("pre", { cls: "count-block-content", text: source });
-      const copyButton = el.createEl("button", {
-        cls: "clickable-icon count-block-copy-button",
-        attr: { type: "button", "aria-label": "Copy count block" }
-      });
-      setIcon(copyButton, "copy");
-
-      copyButton.addEventListener("click", (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        void navigator.clipboard.writeText(source).then(
-          () => new Notice("Count block copied"),
-          () => new Notice("Could not copy count block")
-        );
-      });
-
-      content.addEventListener("pointerdown", (event) => {
-        if (el.closest(".markdown-source-view")) event.stopPropagation();
-      });
-
-      content.addEventListener("click", (event) => {
-        if (!el.closest(".markdown-source-view")) return;
-
-        event.preventDefault();
-        event.stopPropagation();
-
-        const sectionInfo = context.getSectionInfo(el);
-        const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
-        if (sectionInfo && markdownView) {
-          markdownView.editor.setCursor({ line: sectionInfo.lineStart + 1, ch: 0 });
-          markdownView.editor.focus();
-          return;
-        }
-
-        el.parentElement
-          ?.querySelector<HTMLButtonElement>(".edit-block-button")
-          ?.click();
-      });
-
-      window.requestAnimationFrame(() => {
-        el.parentElement
-          ?.querySelector<HTMLElement>(".edit-block-button")
-          ?.classList.add("count-block-host-edit-button");
-      });
-
-      const footer = el.createDiv({
-        cls: "count-block-footer count-block-footer-rendered",
-        text: presentation.text
-      });
-      footer.setAttribute("aria-live", "polite");
-
-      if (presentation.overLimit) footer.addClass("is-over-limit");
-      if (presentation.error) {
-        footer.addClass("has-error");
-        footer.createSpan({ cls: "count-block-error", text: ` — ${presentation.error}` });
-      }
+    this.registerMarkdownPostProcessor((element, context) => {
+      enhanceCountBlocksInReadingView(element, context, this.getDefaults());
     });
 
     this.registerEditorExtension(createCountBlockEditorExtension(() => this.getDefaults()));
@@ -109,12 +46,12 @@ export default class CountBlockPlugin extends Plugin {
     const stored = (await this.loadData()) as Partial<CountBlockSettings> | null;
     this.settings = { ...DEFAULT_SETTINGS, ...stored };
 
-    if (!(this.settings.defaultMetric in METRICS)) {
+    if (typeof this.settings.defaultMetric !== "string" || !isMetricId(this.settings.defaultMetric)) {
       this.settings.defaultMetric = DEFAULT_SETTINGS.defaultMetric;
     }
     if (
       this.settings.defaultLimit !== null &&
-      (!Number.isInteger(this.settings.defaultLimit) || this.settings.defaultLimit <= 0)
+      (!Number.isSafeInteger(this.settings.defaultLimit) || this.settings.defaultLimit <= 0)
     ) {
       this.settings.defaultLimit = null;
     }

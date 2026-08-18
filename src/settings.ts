@@ -1,5 +1,6 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
-import { METRICS, METRIC_IDS, type MetricId } from "./metrics";
+import { isMetricId, METRICS, METRIC_IDS, type MetricId } from "./metrics";
+import { parsePositiveSafeInteger } from "./parser";
 import type CountBlockPlugin from "./main";
 
 export interface CountBlockSettings {
@@ -26,8 +27,10 @@ export class CountBlockSettingTab extends PluginSettingTab {
       .addDropdown((dropdown) => {
         for (const id of METRIC_IDS) dropdown.addOption(id, METRICS[id].label);
         dropdown.setValue(this.plugin.settings.defaultMetric).onChange(async (value) => {
-          this.plugin.settings.defaultMetric = value as MetricId;
-          await this.plugin.saveSettingsAndRefresh();
+          if (isMetricId(value)) {
+            this.plugin.settings.defaultMetric = value;
+            await this.plugin.saveSettingsAndRefresh();
+          }
         });
       });
 
@@ -46,8 +49,9 @@ export class CountBlockSettingTab extends PluginSettingTab {
               return;
             }
 
-            if (/^\d+$/u.test(trimmed) && Number(trimmed) > 0) {
-              this.plugin.settings.defaultLimit = Number(trimmed);
+            const parsed = parsePositiveSafeInteger(trimmed);
+            if (parsed !== null) {
+              this.plugin.settings.defaultLimit = parsed;
               await this.plugin.saveSettingsAndRefresh();
             }
           })
