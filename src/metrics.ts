@@ -1,9 +1,9 @@
 export const METRIC_IDS = [
-  "neis-bytes",
-  "utf8-bytes",
   "words",
   "characters",
-  "characters-no-spaces"
+  "characters-no-spaces",
+  "utf8-bytes",
+  "neis-bytes"
 ] as const;
 
 export type MetricId = (typeof METRIC_IDS)[number];
@@ -70,18 +70,6 @@ export function countCharactersWithoutSpaces(text: string): number {
 }
 
 export const METRICS: Record<MetricId, MetricDefinition> = {
-  "neis-bytes": {
-    id: "neis-bytes",
-    label: "NEIS bytes",
-    unit: "bytes",
-    count: countNeisBytes
-  },
-  "utf8-bytes": {
-    id: "utf8-bytes",
-    label: "UTF-8 bytes",
-    unit: "bytes",
-    count: countUtf8Bytes
-  },
   words: {
     id: "words",
     label: "Words",
@@ -99,6 +87,18 @@ export const METRICS: Record<MetricId, MetricDefinition> = {
     label: "Characters without spaces",
     unit: "characters",
     count: countCharactersWithoutSpaces
+  },
+  "utf8-bytes": {
+    id: "utf8-bytes",
+    label: "UTF-8 bytes",
+    unit: "bytes",
+    count: countUtf8Bytes
+  },
+  "neis-bytes": {
+    id: "neis-bytes",
+    label: "NEIS bytes",
+    unit: "bytes",
+    count: countNeisBytes
   }
 };
 

@@ -9,7 +9,7 @@ export interface CountBlockSettings {
 }
 
 export const DEFAULT_SETTINGS: CountBlockSettings = {
-  defaultMetric: "neis-bytes",
+  defaultMetric: "words",
   defaultLimit: null
 };
 

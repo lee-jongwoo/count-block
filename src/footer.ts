@@ -47,37 +47,11 @@ function appendMetricControl(
   footer.append(control);
 }
 
-function showCopyState(button: HTMLButtonElement, copied: boolean): void {
-  const label = copied ? "Count copied" : "Could not copy count";
-  button.dataset.copyState = copied ? "copied" : "error";
-  button.setAttribute("aria-label", label);
-  button.title = label;
-
-  button.ownerDocument.defaultView?.setTimeout(() => {
-    delete button.dataset.copyState;
-    button.setAttribute("aria-label", `Copy count: ${button.textContent ?? ""}`);
-  }, 1500);
-}
-
-function appendCopyButton(footer: HTMLElement, presentation: CountPresentation): void {
-  const button = footer.ownerDocument.createElement("button");
-  button.type = "button";
-  button.className = "count-block-value";
-  button.textContent = presentation.formattedValue;
-  button.setAttribute("aria-label", `Copy count: ${presentation.formattedValue}`);
-  button.addEventListener("click", () => {
-    const clipboard = button.ownerDocument.defaultView?.navigator.clipboard;
-    if (!clipboard) {
-      showCopyState(button, false);
-      return;
-    }
-
-    void clipboard.writeText(String(presentation.value)).then(
-      () => showCopyState(button, true),
-      () => showCopyState(button, false)
-    );
-  });
-  footer.append(button);
+function appendCountValue(footer: HTMLElement, presentation: CountPresentation): void {
+  const value = footer.ownerDocument.createElement("span");
+  value.className = "count-block-value";
+  value.textContent = presentation.formattedValue;
+  footer.append(value);
 }
 
 export function appendCountFooter(
@@ -96,7 +70,7 @@ export function appendCountFooter(
   separator.textContent = ": ";
   footer.append(separator);
 
-  appendCopyButton(footer, presentation);
+  appendCountValue(footer, presentation);
 
   if (presentation.formattedLimit !== null) {
     const limit = parent.ownerDocument.createElement("span");

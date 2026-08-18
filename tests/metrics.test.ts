@@ -4,7 +4,8 @@ import {
   countCharactersWithoutSpaces,
   countNeisBytes,
   countUtf8Bytes,
-  countWords
+  countWords,
+  METRIC_IDS
 } from "../src/metrics";
 
 describe("NEIS byte counting", () => {
@@ -30,6 +31,16 @@ describe("NEIS byte counting", () => {
 });
 
 describe("general metrics", () => {
+  it("presents broadly useful text metrics before specialized byte metrics", () => {
+    expect(METRIC_IDS).toEqual([
+      "words",
+      "characters",
+      "characters-no-spaces",
+      "utf8-bytes",
+      "neis-bytes"
+    ]);
+  });
+
   it("counts whitespace-separated words", () => {
     expect(countWords(" one\t둘\nthree ")).toBe(3);
   });

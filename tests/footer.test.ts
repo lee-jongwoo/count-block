@@ -1,19 +1,10 @@
 // @vitest-environment jsdom
 
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { appendCountFooter } from "../src/footer";
 
-afterEach(() => {
-  vi.restoreAllMocks();
-});
-
-describe("count footer interactions", () => {
-  it("copies the unformatted numeric value", async () => {
-    const writeText = vi.fn().mockResolvedValue(undefined);
-    Object.defineProperty(window.navigator, "clipboard", {
-      configurable: true,
-      value: { writeText }
-    });
+describe("count footer", () => {
+  it("renders the count as non-interactive text", () => {
     const parent = document.createElement("div");
 
     appendCountFooter(parent, {
@@ -25,12 +16,11 @@ describe("count footer interactions", () => {
       overLimit: false,
       error: null
     });
-    parent.querySelector<HTMLButtonElement>(".count-block-value")!.click();
 
-    await vi.waitFor(() => expect(writeText).toHaveBeenCalledWith("1234"));
-    expect(parent.querySelector(".count-block-value")?.getAttribute("aria-label")).toBe(
-      "Count copied"
-    );
+    const value = parent.querySelector(".count-block-value");
+    expect(value?.textContent).toBe("1,234");
+    expect(value?.tagName).toBe("SPAN");
+    expect(parent.querySelector("button")).toBeNull();
   });
 
   it("renders a selector only when the adapter supplies one", () => {
