@@ -1,0 +1,35 @@
+name: Feature request
+description: Suggest an improvement or a new capability
+title: "[Feature] "
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for sharing an idea. A concrete use case makes it much easier to evaluate.
+
+  - type: textarea
+    id: use-case
+    attributes:
+      label: What are you trying to do?
+      description: Describe the situation or limitation that prompted this request.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would you like Count Block to do?
+      description: Explain the behavior you have in mind. Examples are welcome.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: What are you doing currently?
+      description: If you have a workaround, describe it here.
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Anything else?
+      description: Add mockups, related plugins, links, or other context if useful.

@@ -1,0 +1,71 @@
+name: Release Obsidian plugin
+
+on:
+  push:
+    tags:
+      - "*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Test and build
+        run: |
+          npm test
+          npm run build
+
+      - name: Validate release version
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          node --input-type=module <<'EOF'
+          import { readFileSync } from "node:fs";
+
+          const readJson = (path) => JSON.parse(readFileSync(path, "utf8"));
+          const manifest = readJson("manifest.json");
+          const packageJson = readJson("package.json");
+          const versions = readJson("versions.json");
+          const tag = process.env.RELEASE_TAG;
+
+          if (!/^\d+\.\d+\.\d+$/.test(tag ?? "")) {
+            throw new Error(`Release tag must use x.y.z format; received ${tag}`);
+          }
+          if (tag !== manifest.version) {
+            throw new Error(`Tag ${tag} does not match manifest version ${manifest.version}`);
+          }
+          if (packageJson.version !== manifest.version) {
+            throw new Error(
+              `package.json version ${packageJson.version} does not match manifest version ${manifest.version}`
+            );
+          }
+          if (versions[manifest.version] !== manifest.minAppVersion) {
+            throw new Error(
+              `versions.json must map ${manifest.version} to ${manifest.minAppVersion}`
+            );
+          }
+          EOF
+
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --title "$GITHUB_REF_NAME" \
+            --draft \
+            main.js manifest.json styles.css

@@ -1,0 +1,82 @@
+name: Bug report
+description: Report something that is not working as expected
+title: "[Bug] "
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for taking the time to report a problem.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the problem and what you expected to happen instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: How can I reproduce it?
+      description: Include the smallest example you can, along with the steps that trigger the problem.
+      placeholder: |
+        1. Create a count block with ...
+        2. Switch to ...
+        3. See ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: sample
+    attributes:
+      label: Example count block
+      description: If relevant, paste the Markdown that causes the problem.
+      render: markdown
+
+  - type: input
+    id: obsidian-version
+    attributes:
+      label: Obsidian version
+      placeholder: "For example: 1.9.12"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - Windows
+        - macOS
+        - Linux
+        - Android
+        - iOS
+    validations:
+      required: true
+
+  - type: input
+    id: plugin-version
+    attributes:
+      label: Count Block version
+      placeholder: "For example: 0.1.0"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: view
+    attributes:
+      label: Where does it happen?
+      multiple: true
+      options:
+        - Live Preview
+        - Source mode
+        - Reading view
+        - Plugin settings
+        - Somewhere else
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Anything else?
+      description: Add screenshots, console errors, theme details, or other context if they help explain the problem.
+
