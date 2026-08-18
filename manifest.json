@@ -3,7 +3,8 @@
   "name": "Count Block",
   "version": "0.1.0",
   "minAppVersion": "1.5.0",
-  "description": "Add editable plain-text blocks with live word, character, UTF-8 byte, and NEIS byte counts.",
-  "author": "jlee",
+  "description": "Add editable text blocks with live word, character and byte counts.",
+  "author": "lee-jongwoo",
+  "authorUrl": "https://jongwoo.dev",
   "isDesktopOnly": false
 }
