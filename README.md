@@ -34,7 +34,7 @@ Write plain text here.
 
 ````
 
-Use the **Count Block: Insert count block** command to create a block or wrap selected text.
+Use the **Count Block: Insert** command to create a block or wrap selected text.
 
 Invalid metrics, limits, or option names are shown in the footer. Top-level fenced blocks are supported in the initial release; nesting a count block inside a list or blockquote is not yet supported by the live editor footer.
 
