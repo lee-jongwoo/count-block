@@ -1,10 +1,14 @@
 # Count Block
 
+![GitHub last commit](https://img.shields.io/github/last-commit/lee-jongwoo/count-block)
+![GitHub Release](https://img.shields.io/github/v/release/lee-jongwoo/count-block)
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/lee-jongwoo/count-block/release.yml)
+
 An Obsidian plugin for text-counting blocks. Add editable text blocks with a live counter beneath them.
 
 The block lives with the rest of your Markdown content: it's really just a code block with its language set as `count`. This plugin displays a footer with its count (of whatever metric you get to choose) right below each block. No content is stored outside your vault.
 
-<img width="600" height="274" alt="count-block-screenshot" src="https://github.com/user-attachments/assets/5cb619ca-27a8-49fc-9968-a900506f07dd" />
+<img width="600" height="274" alt="count-block-screenshot" src="./assets/count-block-screenshot.png" />
 
 ## Metrics
 
