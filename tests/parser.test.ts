@@ -7,7 +7,7 @@ import {
   parseFenceOpening
 } from "../src/parser";
 
-const defaults = { metric: "neis-bytes" as const, limit: null };
+const defaults = { metric: "neis-bytes" as const, min: null, limit: null };
 
 describe("count block configuration", () => {
   it("parses block options", () => {
@@ -15,6 +15,7 @@ describe("count block configuration", () => {
       parseCountBlockConfiguration("metric=characters-no-spaces limit=1500", defaults)
     ).toEqual({
       metric: "characters-no-spaces",
+      min: null,
       limit: 1500,
       errors: []
     });
@@ -24,6 +25,7 @@ describe("count block configuration", () => {
     const config = parseCountBlockConfiguration("metric=nope limit=-2 surprise=yes", defaults);
     expect(config.metric).toBe("neis-bytes");
     expect(config.limit).toBeNull();
+    expect(config.min).toBeNull();
     expect(config.errors).toEqual([
       "Unknown metric: nope",
       "Limit must be a positive integer",
@@ -35,6 +37,48 @@ describe("count block configuration", () => {
     const config = parseCountBlockConfiguration("limit=999999999999999999999999", defaults);
     expect(config.limit).toBeNull();
     expect(config.errors).toEqual(["Limit must be a positive integer"]);
+  });
+
+  it("parses min and max while keeping limit as an upper-bound alias", () => {
+    expect(parseCountBlockConfiguration("min=200 max=500", defaults)).toEqual({
+      metric: "neis-bytes",
+      min: 200,
+      limit: 500,
+      errors: []
+    });
+    expect(parseCountBlockConfiguration("limit=500", defaults).limit).toBe(500);
+  });
+
+  it("inherits the default minimum and lets a block override it", () => {
+    const withMinimum = { ...defaults, min: 200, limit: 500 };
+    expect(parseCountBlockConfiguration("", withMinimum)).toMatchObject({
+      min: 200,
+      limit: 500,
+      errors: []
+    });
+    expect(parseCountBlockConfiguration("min=100", withMinimum)).toMatchObject({
+      min: 100,
+      limit: 500,
+      errors: []
+    });
+    expect(parseCountBlockConfiguration("min=600 max=700", withMinimum)).toMatchObject({
+      min: 600,
+      limit: 700,
+      errors: []
+    });
+  });
+
+  it("reports invalid and conflicting bounds", () => {
+    expect(parseCountBlockConfiguration("min=0 max=abc", defaults).errors).toEqual([
+      "Min must be a positive integer",
+      "Max must be a positive integer"
+    ]);
+    expect(parseCountBlockConfiguration("min=600 max=500", defaults).errors).toEqual([
+      "Min must not exceed max"
+    ]);
+    expect(parseCountBlockConfiguration("max=500 limit=400", defaults).errors).toEqual([
+      "Use either max or limit, not both"
+    ]);
   });
 });
 
