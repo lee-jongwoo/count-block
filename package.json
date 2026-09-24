@@ -1,6 +1,6 @@
 {
   "name": "obsidian-count-block",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Editable plain-text blocks with live, configurable counts for Obsidian.",
   "type": "module",
   "scripts": {
