@@ -12,7 +12,9 @@ describe("count footer", () => {
       metricLabel: "Words",
       formattedValue: "1,234",
       formattedLimit: null,
+      comparison: null,
       text: "Words: 1,234",
+      belowMinimum: false,
       overLimit: false,
       error: null
     });
@@ -31,7 +33,9 @@ describe("count footer", () => {
       metricLabel: "Words",
       formattedValue: "2",
       formattedLimit: null,
+      comparison: null,
       text: "Words: 2",
+      belowMinimum: false,
       overLimit: false,
       error: null
     };

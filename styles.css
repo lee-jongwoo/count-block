@@ -3,7 +3,6 @@
 .count-block-footer-editor {
   --count-block-background: var(--background-primary-alt);
   --count-block-footer-background: var(--background-secondary);
-  --count-block-border: var(--background-modifier-border);
 }
 
 .count-block {
@@ -19,12 +18,17 @@
   white-space: pre-wrap;
   color: var(--text-normal);
   background: var(--count-block-background);
-  border: 1px solid var(--count-block-border);
+  border: 0;
   border-radius: var(--radius-s) var(--radius-s) 0 0;
   font-family: var(--font-monospace);
   font-size: var(--code-size);
   line-height: var(--line-height-normal);
   tab-size: var(--tab-size);
+}
+
+.count-block-reading > pre.count-block-content > code {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
 }
 
 .count-block-footer {
@@ -36,8 +40,7 @@
   padding: var(--size-2-2) var(--size-4-3);
   color: var(--text-muted);
   background: var(--count-block-footer-background, var(--background-secondary));
-  border: 1px solid var(--count-block-border, var(--background-modifier-border));
-  border-top: 0;
+  border: 0;
   border-radius: 0 0 var(--radius-s) var(--radius-s);
   font-size: var(--font-ui-smaller);
   font-variant-numeric: tabular-nums;
@@ -112,19 +115,20 @@
   box-sizing: border-box;
   width: calc(100% - var(--size-2-2));
   background: var(--count-block-background);
-  border-inline: 1px solid var(--count-block-border);
+  border: 0;
+  border-radius: 0;
   font-family: var(--font-monospace);
   font-size: var(--code-size);
   tab-size: var(--tab-size);
 }
 
 .count-block-editor-line-first {
-  border-top: 1px solid var(--count-block-border);
   border-radius: var(--radius-s) var(--radius-s) 0 0;
 }
 
-.count-block-editor-line-last {
-  border-bottom: 0;
+.markdown-source-view.mod-cm6 .cm-line.count-block-editor-line-last {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
 }
 
 .count-block-footer-editor {
@@ -133,10 +137,9 @@
   padding-bottom: var(--size-4-3);
 }
 
-.count-block-footer.is-over-limit {
+.count-block-footer.is-out-of-range {
   color: var(--text-error);
   background: rgba(var(--color-red-rgb), 0.08);
-  border-color: var(--text-error);
   font-weight: var(--font-semibold);
 }
 

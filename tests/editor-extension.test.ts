@@ -5,7 +5,7 @@ import { EditorView } from "@codemirror/view";
 import { afterEach, describe, expect, it } from "vitest";
 import { createCountBlockEditorExtension } from "../src/editor-extension";
 
-const defaults = { metric: "neis-bytes" as const, limit: null };
+const defaults = { metric: "neis-bytes" as const, min: null, limit: null };
 
 let view: EditorView | undefined;
 
@@ -88,6 +88,41 @@ describe("count block editor extension", () => {
     ).toBe("words");
     expect(parent.querySelector(".count-block-value")?.textContent).toBe("2");
     expect(parent.querySelector(".count-block-limit")?.textContent).toBe(" / 10");
+  });
+
+  it("updates the comparison as the count crosses both bounds", () => {
+    const parent = document.createElement("div");
+    document.body.append(parent);
+    const doc = ["```count metric=words min=2 max=3", "one", "```"].join("\n");
+
+    view = new EditorView({
+      parent,
+      state: EditorState.create({
+        doc,
+        extensions: [createCountBlockEditorExtension(() => defaults)]
+      })
+    });
+
+    const footer = () => parent.querySelector(".count-block-footer");
+    const count = () => footer()?.querySelector(".count-block-value")?.textContent;
+    const comparison = () => footer()?.querySelector(".count-block-limit")?.textContent;
+    expect(count()).toBe("1");
+    expect(comparison()).toBe(" < 2");
+    expect(footer()?.classList.contains("is-out-of-range")).toBe(true);
+
+    const bodyFrom = view.state.doc.toString().indexOf("one");
+    view.dispatch({ changes: { from: bodyFrom, to: bodyFrom + 3, insert: "one two" } });
+    expect(count()).toBe("2");
+    expect(comparison()).toBe(" / 3");
+    expect(footer()?.classList.contains("is-out-of-range")).toBe(false);
+
+    view.dispatch({
+      changes: { from: bodyFrom, to: bodyFrom + 7, insert: "one two three four" }
+    });
+    expect(count()).toBe("4");
+    expect(comparison()).toBe(" > 3");
+    expect(footer()?.classList.contains("is-over-limit")).toBe(true);
+    expect(footer()?.classList.contains("is-out-of-range")).toBe(true);
   });
 
   it("does not decorate count-looking text inside another code fence", () => {

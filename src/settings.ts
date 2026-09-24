@@ -10,17 +10,35 @@ import type CountBlockPlugin from "./main";
 
 export interface CountBlockSettings {
   defaultMetric: MetricId;
+  defaultMin: number | null;
   defaultLimit: number | null;
 }
 
 export const DEFAULT_SETTINGS: CountBlockSettings = {
   defaultMetric: "words",
+  defaultMin: null,
   defaultLimit: null
 };
 
 export class CountBlockSettingTab extends PluginSettingTab {
   constructor(app: App, private readonly plugin: CountBlockPlugin) {
     super(app, plugin);
+  }
+
+  private parseBound(value: string): number | null | undefined {
+    const trimmed = value.trim();
+    return trimmed === "" ? null : parsePositiveSafeInteger(trimmed) ?? undefined;
+  }
+
+  private boundError(key: "defaultMin" | "defaultLimit", value: string): string | undefined {
+    const parsed = this.parseBound(value);
+    if (parsed === undefined) return "Enter a positive integer or leave this blank.";
+
+    const min = key === "defaultMin" ? parsed : this.plugin.settings.defaultMin;
+    const max = key === "defaultLimit" ? parsed : this.plugin.settings.defaultLimit;
+    return min !== null && max !== null && min > max
+      ? "The default minimum cannot exceed the default maximum."
+      : undefined;
   }
 
   getSettingDefinitions(): SettingDefinitionItem<keyof CountBlockSettings>[] {
@@ -37,16 +55,23 @@ export class CountBlockSettingTab extends PluginSettingTab {
         }
       },
       {
-        name: "Default limit",
-        desc: "Optional positive integer. A block-level limit overrides it.",
+        name: "Default minimum",
+        desc: "Optional positive integer. A block-level min overrides it.",
+        control: {
+          type: "text",
+          key: "defaultMin",
+          placeholder: "No minimum",
+          validate: (value) => this.boundError("defaultMin", value)
+        }
+      },
+      {
+        name: "Default maximum",
+        desc: "Optional positive integer. A block-level max overrides it.",
         control: {
           type: "text",
           key: "defaultLimit",
-          placeholder: "No limit",
-          validate: (value) =>
-            value.trim() === "" || parsePositiveSafeInteger(value) !== null
-              ? undefined
-              : "Enter a positive integer or leave this blank."
+          placeholder: "No maximum",
+          validate: (value) => this.boundError("defaultLimit", value)
         }
       }
     ];
@@ -54,6 +79,9 @@ export class CountBlockSettingTab extends PluginSettingTab {
 
   getControlValue(key: string): unknown {
     if (key === "defaultMetric") return this.plugin.settings.defaultMetric;
+    if (key === "defaultMin") {
+      return this.plugin.settings.defaultMin?.toString() ?? "";
+    }
     if (key === "defaultLimit") {
       return this.plugin.settings.defaultLimit?.toString() ?? "";
     }
@@ -63,11 +91,12 @@ export class CountBlockSettingTab extends PluginSettingTab {
   async setControlValue(key: string, value: unknown): Promise<void> {
     if (key === "defaultMetric" && typeof value === "string" && isMetricId(value)) {
       this.plugin.settings.defaultMetric = value;
-    } else if (key === "defaultLimit" && typeof value === "string") {
-      const trimmed = value.trim();
-      const parsed = trimmed === "" ? null : parsePositiveSafeInteger(trimmed);
-      if (trimmed !== "" && parsed === null) return;
-      this.plugin.settings.defaultLimit = parsed;
+    } else if (
+      (key === "defaultMin" || key === "defaultLimit") &&
+      typeof value === "string"
+    ) {
+      if (this.boundError(key, value)) return;
+      this.plugin.settings[key] = this.parseBound(value) ?? null;
     } else {
       return;
     }
@@ -93,26 +122,23 @@ export class CountBlockSettingTab extends PluginSettingTab {
       });
 
     new Setting(this.containerEl)
-      .setName("Default limit")
-      .setDesc("Optional positive integer. A block-level limit overrides it.")
+      .setName("Default minimum")
+      .setDesc("Optional positive integer. A block-level min overrides it.")
       .addText((text) =>
         text
-          .setPlaceholder("No limit")
-          .setValue(this.plugin.settings.defaultLimit?.toString() ?? "")
-          .onChange(async (value) => {
-            const trimmed = value.trim();
-            if (trimmed === "") {
-              this.plugin.settings.defaultLimit = null;
-              await this.plugin.saveSettingsAndRefresh();
-              return;
-            }
+          .setPlaceholder("No minimum")
+          .setValue(this.plugin.settings.defaultMin?.toString() ?? "")
+          .onChange((value) => this.setControlValue("defaultMin", value))
+      );
 
-            const parsed = parsePositiveSafeInteger(trimmed);
-            if (parsed !== null) {
-              this.plugin.settings.defaultLimit = parsed;
-              await this.plugin.saveSettingsAndRefresh();
-            }
-          })
+    new Setting(this.containerEl)
+      .setName("Default maximum")
+      .setDesc("Optional positive integer. A block-level max overrides it.")
+      .addText((text) =>
+        text
+          .setPlaceholder("No maximum")
+          .setValue(this.plugin.settings.defaultLimit?.toString() ?? "")
+          .onChange((value) => this.setControlValue("defaultLimit", value))
       );
   }
 }

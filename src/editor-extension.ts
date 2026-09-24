@@ -46,6 +46,7 @@ class CountFooterWidget extends WidgetType {
     return (
       this.presentation.text === other.presentation.text &&
       this.presentation.error === other.presentation.error &&
+      this.presentation.belowMinimum === other.presentation.belowMinimum &&
       this.presentation.overLimit === other.presentation.overLimit &&
       this.block.from === other.block.from &&
       this.block.openingTo === other.block.openingTo

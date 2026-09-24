@@ -65,14 +65,18 @@ export function appendCountFooter(
 
   appendCountValue(footer, presentation);
 
-  if (presentation.formattedLimit !== null) {
+  if (presentation.comparison !== null) {
     footer.createSpan({
       cls: "count-block-limit",
-      text: ` / ${presentation.formattedLimit}`
+      text: presentation.comparison
     });
   }
 
+  if (presentation.belowMinimum) footer.classList.add("is-under-limit");
   if (presentation.overLimit) footer.classList.add("is-over-limit");
+  if (presentation.belowMinimum || presentation.overLimit) {
+    footer.classList.add("is-out-of-range");
+  }
   if (presentation.error) {
     footer.classList.add("has-error");
     footer.dataset.countBlockError = presentation.error;
