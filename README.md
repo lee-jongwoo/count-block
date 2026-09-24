@@ -8,7 +8,7 @@ An Obsidian plugin for text-counting blocks. Add editable text blocks with a liv
 
 The block lives with the rest of your Markdown content: it's really just a code block with its language set as `count`. This plugin displays a footer with its count (of whatever metric you get to choose) right below each block. No content is stored outside your vault.
 
-<img width="600" height="274" alt="count-block-screenshot" src="./assets/count-block-screenshot.png" />
+<img width="589" height="154" alt="count-block-screenshot" src="./assets/count-block-screenshot.png" />
 
 ## Metrics
 
@@ -23,12 +23,17 @@ Word count is the default metric, while more options are available. It can be ch
 Block options belong on the opening fence and are not included in the count:
 
 - `metric=<metric-id>`
-- `limit=<positive-integer>`
+- `min=<positive-integer>`
+- `max=<positive-integer>`
+
+The count is valid at either boundary. The footer will turn red if the text falls outside of the specified boundary.
+
+Set optional default minimum and maximum values in the plugin settings. A block's `min=` or `max=` option overrides the corresponding default.
 
 Example:
 
 ````markdown
-```count metric=words limit=500
+```count metric=words min=200 max=500
 Write plain text here.
 
 
@@ -36,7 +41,7 @@ Write plain text here.
 
 Use the **Count Block: Insert** command to create a block or wrap selected text.
 
-Invalid metrics, limits, or option names are shown in the footer. Top-level fenced blocks are supported in the initial release; nesting a count block inside a list or blockquote is not yet supported by the live editor footer.
+Invalid metrics, bounds, or option names are shown in the footer. A minimum above the maximum, or using `max=` together with `limit=`, is a configuration error. Top-level fenced blocks are supported in the initial release; nesting a count block inside a list or blockquote is not yet supported by the live editor footer.
 
 ### NEIS bytes
 
