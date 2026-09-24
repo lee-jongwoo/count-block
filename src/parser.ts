@@ -2,11 +2,13 @@ import { isMetricId, type MetricId } from "./metrics";
 
 export interface CountBlockDefaults {
   metric: MetricId;
+  min: number | null;
   limit: number | null;
 }
 
 export interface CountBlockConfiguration {
   metric: MetricId;
+  min: number | null;
   limit: number | null;
   errors: string[];
 }
@@ -105,6 +107,7 @@ export function parseCountBlockConfiguration(
 ): CountBlockConfiguration {
   const { values, errors } = parseOptions(info);
   let metric = defaults.metric;
+  let min = defaults.min;
   let limit = defaults.limit;
 
   const metricValue = values.get("metric");
@@ -113,20 +116,41 @@ export function parseCountBlockConfiguration(
     else errors.push(`Unknown metric: ${metricValue}`);
   }
 
-  const limitValue = values.get("limit");
+  const minValue = values.get("min");
+  let boundsValid = true;
+  if (minValue !== undefined) {
+    const parsedMin = parsePositiveSafeInteger(minValue);
+    if (parsedMin === null) {
+      errors.push("Min must be a positive integer");
+      boundsValid = false;
+    }
+    else min = parsedMin;
+  }
+
+  if (values.has("max") && values.has("limit")) {
+    errors.push("Use either max or limit, not both");
+  }
+  const limitValue = values.get("max") ?? values.get("limit");
   if (limitValue !== undefined) {
     const parsedLimit = parsePositiveSafeInteger(limitValue);
-    if (parsedLimit === null) errors.push("Limit must be a positive integer");
+    if (parsedLimit === null) {
+      errors.push(`${values.has("max") ? "Max" : "Limit"} must be a positive integer`);
+      boundsValid = false;
+    }
     else limit = parsedLimit;
   }
 
+  if (boundsValid && min !== null && limit !== null && min > limit) {
+    errors.push("Min must not exceed max");
+  }
+
   for (const key of values.keys()) {
-    if (key !== "metric" && key !== "limit") {
+    if (key !== "metric" && key !== "min" && key !== "max" && key !== "limit") {
       errors.push(`Unknown option: ${key}`);
     }
   }
 
-  return { metric, limit, errors };
+  return { metric, min, limit, errors };
 }
 
 function lineStarts(lines: string[]): number[] {

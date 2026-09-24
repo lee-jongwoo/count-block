@@ -33,6 +33,7 @@ export default class CountBlockPlugin extends Plugin {
   getDefaults(): CountBlockDefaults {
     return {
       metric: this.settings.defaultMetric,
+      min: this.settings.defaultMin,
       limit: this.settings.defaultLimit
     };
   }
@@ -54,6 +55,19 @@ export default class CountBlockPlugin extends Plugin {
       (!Number.isSafeInteger(this.settings.defaultLimit) || this.settings.defaultLimit <= 0)
     ) {
       this.settings.defaultLimit = null;
+    }
+    if (
+      this.settings.defaultMin !== null &&
+      (!Number.isSafeInteger(this.settings.defaultMin) || this.settings.defaultMin <= 0)
+    ) {
+      this.settings.defaultMin = null;
+    }
+    if (
+      this.settings.defaultMin !== null &&
+      this.settings.defaultLimit !== null &&
+      this.settings.defaultMin > this.settings.defaultLimit
+    ) {
+      this.settings.defaultMin = null;
     }
   }
 

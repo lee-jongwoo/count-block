@@ -6,7 +6,9 @@ export interface CountPresentation {
   metricLabel: string;
   formattedValue: string;
   formattedLimit: string | null;
+  comparison: string | null;
   text: string;
+  belowMinimum: boolean;
   overLimit: boolean;
   error: string | null;
 }
@@ -17,18 +19,28 @@ export function presentCount(source: string, config: CountBlockConfiguration): C
   const metric = METRICS[config.metric];
   const value = metric.count(source);
   const formattedValue = NUMBER_FORMATTER.format(value);
+  const formattedMin = config.min === null ? null : NUMBER_FORMATTER.format(config.min);
   const formattedLimit = config.limit === null ? null : NUMBER_FORMATTER.format(config.limit);
-  const text = config.limit
-    ? `${metric.label}: ${formattedValue} / ${formattedLimit}`
-    : `${metric.label}: ${formattedValue}`;
+  const belowMinimum = config.min !== null && value < config.min;
+  const overLimit = config.limit !== null && value > config.limit;
+  const comparison = belowMinimum
+    ? ` < ${formattedMin}`
+    : overLimit
+      ? ` > ${formattedLimit}`
+      : formattedLimit !== null
+        ? ` / ${formattedLimit}`
+        : null;
+  const text = `${metric.label}: ${formattedValue}${comparison ?? ""}`;
 
   return {
     value,
     metricLabel: metric.label,
     formattedValue,
     formattedLimit,
+    comparison,
     text,
-    overLimit: config.limit !== null && value > config.limit,
+    belowMinimum,
+    overLimit,
     error: config.errors.length > 0 ? config.errors.join("; ") : null
   };
 }

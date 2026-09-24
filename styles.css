@@ -133,7 +133,7 @@
   padding-bottom: var(--size-4-3);
 }
 
-.count-block-footer.is-over-limit {
+.count-block-footer.is-out-of-range {
   color: var(--text-error);
   background: rgba(var(--color-red-rgb), 0.08);
   border-color: var(--text-error);
